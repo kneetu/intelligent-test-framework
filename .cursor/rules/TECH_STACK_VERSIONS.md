@@ -66,6 +66,19 @@ All new services, agents, and utilities in these modules MUST follow the version
     - External integration endpoints (including Jenkins-facing APIs) MUST be implemented using FastAPI.
     - Request/response bodies MUST be defined using the Pydantic v2 baseline above.
 
+### LLM provider and default model
+
+- **Provider**: **OpenAI**
+  - Use the official `openai` Python client for any direct API usage; LangChain/LangGraph integrations MUST use the OpenAI chat integration (`langchain_openai.ChatOpenAI`) so that tracing and tooling stay consistent. The `langchain-openai` package provides this integration and MUST be present where LLM chains or agents are used.
+
+- **Default model (cost-optimal)**
+  - **Model ID**: `gpt-4o-mini`
+  - Rationale: best cost/performance among OpenAI models for general agent and chain workloads (lowest $/token among capable models, 128K context, strong on reasoning and coding).
+  - Policy:
+    - All new chains, agents, and graph nodes that call an LLM MUST use `gpt-4o-mini` unless overridden by configuration (e.g. env or config file).
+    - Do not default to `gpt-4`, `gpt-4-turbo`, or other higher-cost models in code; use a single configurable model identifier that defaults to `gpt-4o-mini`.
+    - When adding new features that need an LLM, reference this default in `intelligent_common_utils` (e.g. a shared constant or config schema) so all modules stay aligned.
+
 ### Database version policy
 
 - **PostgreSQL**
@@ -109,5 +122,6 @@ All new services, agents, and utilities in these modules MUST follow the version
     - LangChain and LangGraph configuration.
     - LangSmith client setup.
     - Postgres connections and data access helpers.
+    - Default LLM provider and model configuration (OpenAI, `gpt-4o-mini`).
   - MUST follow the exact versions and policies defined in this rule and SHOULD be the first place updated when the stack is upgraded.
 
