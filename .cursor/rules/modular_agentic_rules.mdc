@@ -1,0 +1,21 @@
+---
+Description: This rule should be used ONLY when new project module is created. **Don't apply on existing module**
+alwaysApply: false
+---
+
+**Key Components**
+
+1. **The Agent**
+The agent.py file is the brain of the system. It handles configuration loading, initializes the LLM, tools, memory, and judge, and runs an interaction loop for user queries.
+
+2. **Pluggable LLMs**
+The llm.py module defines a generic LLM interface and supports multiple providers (OpenAI, Gemini, or your own). You can easily swap in new models by subclassing.
+
+3. **Tools**
+The tools.py module abstracts tools like search, weather, and documentation generation. Each tool is asynchronous and can be extended for new capabilities.
+
+4. **Memory**
+The **memory.py** module manages conversation history, storing it in a JSON file for persistence and context.
+
+5. **Judge Agent**
+The **judge.py** module provides a self-critique mechanism, allowing the agent to review its own answers and retry if needed.
