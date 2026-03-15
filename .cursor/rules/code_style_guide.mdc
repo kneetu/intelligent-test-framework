@@ -1,0 +1,8 @@
+---
+Description: General best practices on code style in python
+Glob: *.py
+alwaysApply: true
+---
+
+write the code using following rules
+- 
