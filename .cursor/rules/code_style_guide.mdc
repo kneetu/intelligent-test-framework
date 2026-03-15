@@ -5,4 +5,34 @@ alwaysApply: true
 ---
 
 write the code using following rules
-- 
+1. Lines should not exceed 100 characters as it's difficult to do the diff
+2. line break should enhance readability: 
+   1. break before type + param, not within
+   2. line break method chains after "."
+3. Use **docstrings** (following https://peps.python.org/pep-0257/) for public functions/classes.
+4. use **finally** whenever applicable
+5. use blank lines to enhance readability
+6. methods should return narroest type possible, but accept the broadest type possible
+7. use explanatory variable 
+8. use code comments to explain the purpose and flow 
+9. use python style guides available online
+10. do not use hard waits like sleep(). use polling instead
+11. user logger methods instead of standard print statement.
+12. Log error upon exception or failures in the code
+13. adapt PEP8 guidelines
+14. Automate style enforcement using tools like Black (formatter) and flake8 or Pylint (linters).
+15. Use "Pythonic" features like context managers, list comprehensions, and if __name__ == "__main__":
+16. Do not hard code global variables within the test files. Use config files to define common variables
+17. Prefer LCEL's readable pipe syntax (prompt | llm | parser) over legacy chains for composability, testability, and native streaming support.
+18. Use Pydantic models to define expected outputs, ensuring type safety and reducing post-processing bugs and manual text parsing.
+19. Manage Prompts Effectively:
+    1. Use chat prompts for new projects as they are better supported by modern LLMs.
+    2. Treat prompts like code: version control them, use templates for dynamic values, and perform A/B testing.
+    3. Keep prompts focused and modular; break down complex tasks into smaller, chained prompts.
+20. Use async for I/O-bound operations (API calls, retrieval) to improve throughput.
+21. implement caching strategy using the technology provided in tech stack
+22. Add comprehensice tracing, debugging, and evaluation using the tech stack defined
+23. Add unit tests using **fake** LLM for deterministic results
+24. Implement robust error handling with retry mechanisms and exponential backoff for external API calls.
+25. Design fallback systems and circuit breakers to ensure graceful degradation when services fail.
+26. Add validation and guardrails to catch and repair malformed responses, using automatic retries where necessary. 
