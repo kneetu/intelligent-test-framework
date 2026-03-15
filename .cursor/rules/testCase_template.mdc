@@ -2,3 +2,29 @@
 Description: 
 alwaysApply: true
 ---
+
+# RULE FILE — Generate Test Cases (CSV) from PRD
+
+## Purpose
+
+You will read a PRD (Product Requirements Document) and output **test cases as CSV** following the schema and rules below. Output **CSV only**—no extra commentary. Ensure each row is a high‑quality, atomic, executable test.
+
+## CSV Schema (Columns & Definitions)
+
+Create a CSV with the header exactly as below (in this order):
+ID,Name,Description,Requirement ID,Component/Module,Test Type,Priority,Severity,Pre-requisite,Test Data,Environment,Steps,Expected,Actual Value,Additional Notes,Automation Priority,Automation Status,Owner,Estimated Time (mins),Tags,Defect,Status,Version
+**Column guidance:**
+- **ID**:Required, Deterministic, unique. Format: `TC-{REQ_OR_AREA}-{NNN}` (e.g., `TC-LOGIN-001`). If no clear requirement key, use area/module (UPPER_SNAKE_CASE).
+- **Summary**:Required, 5–12 words, imperative (e.g., “Create account with valid email”).
+- **Description**:Optional, 1–3 concise sentences: what is tested, and why it matters.
+- **Requirement ID**:Required, Trace to PRD sections/IDs (e.g., `PRD-3.2.1`, `REQ-AC-07`). If missing, map to the closest heading path (e.g., `PRD[3.2]/Password Policy`).
+- **Component/Module**:Required, Feature or subsystem (from PRD ToC or architecture).
+- **Test Group**:Required, One of: 'Smoke', 'Full', 'Comprehensive'.
+- **Test Type**:Required, One of: `Functional`, `Negative`, `Performance`, `Accessibility`.
+- **Priority**:Required, `P0` (Blocker), `P1` (High), `P2` (Medium), `P3` (Low).
+- **Severity**:Optional, Impact if bug is found: `S1` Critical, `S2` Major, `S3` Minor, `S4` Trivial. 
+- **Pre-requisite**:Optional, Setup state; if none, write `None`.
+- **Test Data**:Optional, Concrete data values or generators; if dynamic, describe pattern (e.g., `email: user+ts@domain.com`).
+- **Steps**:Required, Numbered list in one cell. Use `\n` within quotes:
+
+## Definitions
