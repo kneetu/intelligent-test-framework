@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intelligent-common-utils
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: intelligent-common-utils
+  template:
+    metadata:
+      labels:
+        app: intelligent-common-utils
+    spec:
+      containers:
+        - name: api
+          image: intelligent-common-utils:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: openai-api-key
+            - name: LANGSMITH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: langsmith-api-key
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+# Optional: Postgres 16 sidecar or use external service (postgres:16)
+# apiVersion: v1
+# kind: Pod
+# spec:
+#   containers:
+#     - name: postgres
+#       image: postgres:16
