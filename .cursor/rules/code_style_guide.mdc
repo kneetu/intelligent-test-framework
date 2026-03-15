@@ -4,7 +4,8 @@ Glob: *.py
 alwaysApply: true
 ---
 
-write the code using following rules
+# write the code using following rules
+
 1. Lines should not exceed 100 characters as it's difficult to do the diff
 2. line break should enhance readability: 
    1. break before type + param, not within
