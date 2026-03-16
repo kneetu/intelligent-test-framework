@@ -7,6 +7,7 @@ alwaysApply: false
 # Multi Module Project Structure
 
 ## intelligent_test_generator
+
 **Purpose**: generate test cases in csv format from the PRD input  
 **Root Folder Name**: intelligent_test_generator
 
