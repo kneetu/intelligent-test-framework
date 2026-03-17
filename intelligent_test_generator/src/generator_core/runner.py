@@ -4,6 +4,7 @@ Uses agent_core from intelligent_common_utils (path must be set).
 """
 
 import csv
+import json
 import logging
 import sys
 from pathlib import Path
@@ -18,6 +19,31 @@ from generator_core.prompts import GENERATE_ONE_TEST
 from generator_core.schema import TestCaseRow
 
 logger = logging.getLogger(__name__)
+
+
+def _load_config(config_path: Optional[str]) -> dict:
+    """
+    Load generator configuration from a JSON file, if provided.
+
+    Returns an empty dict if no path is given, the file does not exist,
+    or the file cannot be parsed.
+    """
+    if not config_path:
+        return {}
+    path = Path(config_path)
+    if not path.is_file():
+        logger.warning("Config file not found at %s; ignoring.", config_path)
+        return {}
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            return data
+        logger.warning("Config file %s did not contain a JSON object; ignoring.", config_path)
+        return {}
+    except Exception as e:
+        logger.warning("Failed to load config from %s: %s", config_path, e)
+        return {}
 
 
 def _get_llm():
@@ -71,6 +97,14 @@ async def run_generator(
     from agent_core.utils.tracing import setup_tracing
 
     setup_tracing()
+
+    # Load optional configuration (e.g., default max_cases) from config_path.
+    config = _load_config(config_path)
+    if max_cases is None:
+        cfg_max_cases = config.get("max_cases")
+        if isinstance(cfg_max_cases, int) and cfg_max_cases > 0:
+            max_cases = cfg_max_cases
+
     prd_content = await load_prd_content(prd_path)
     if not prd_content.strip():
         logger.warning("PRD empty or unreadable; writing header-only CSV.")
