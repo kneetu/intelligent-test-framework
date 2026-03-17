@@ -5,7 +5,7 @@ Header order: ID, Name, Description, Requirement ID, Component/Module, ...
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # Allowed enums per testCase_template
@@ -42,8 +42,7 @@ class TestCaseRow(BaseModel):
     Status: str = Field(default="Draft")
     Version: str = Field(default="1.0")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
     def to_csv_header(self) -> str:
         """Exact CSV header per testCase_template."""
