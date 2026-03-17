@@ -8,7 +8,6 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 # Ensure intelligent_common_utils is on path when running from generator
 _common_src = Path(__file__).resolve().parents[2] / "intelligent_common_utils" / "src"
@@ -21,7 +20,7 @@ from generator_core.schema import TestCaseRow
 logger = logging.getLogger(__name__)
 
 
-def _load_config(config_path: Optional[str]) -> dict:
+def _load_config(config_path: str | None) -> dict:
     """
     Load generator configuration from a JSON file, if provided.
 
@@ -87,8 +86,8 @@ async def generate_one_case(
 async def run_generator(
     prd_path: str,
     output_csv_path: str,
-    config_path: Optional[str] = None,
-    max_cases: Optional[int] = None,
+    config_path: str | None = None,
+    max_cases: int | None = None,
 ) -> str:
     """
     Load PRD, generate test cases via LCEL, write CSV. Returns path to CSV.
@@ -114,7 +113,7 @@ async def run_generator(
         sections = sections[: max_cases]
     llm = _get_llm()
     rows: List[TestCaseRow] = []
-    for i, (req_id, text, component) in enumerate(sections):
+    for req_id, text, component in sections:
         try:
             row = await generate_one_case(
                 requirement_text=text,
@@ -131,7 +130,7 @@ async def run_generator(
     return str(out_path)
 
 
-def _split_prd_into_requirements(prd_content: str) -> List[tuple]:
+def _split_prd_into_requirements(prd_content: str) -> list[tuple]:
     """Split PRD text into (requirement_id, text, component) for each section."""
     lines = prd_content.strip().split("\n")
     sections: List[tuple] = []

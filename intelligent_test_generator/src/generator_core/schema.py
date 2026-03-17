@@ -3,8 +3,6 @@ Pydantic model for one test case row matching testCase_template CSV columns.
 Header order: ID, Name, Description, Requirement ID, Component/Module, ...
 """
 
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 

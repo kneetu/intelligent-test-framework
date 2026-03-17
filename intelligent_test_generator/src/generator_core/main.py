@@ -5,13 +5,7 @@ Entry point: parse CLI/config, load PRD, run generator, write CSV.
 import argparse
 import asyncio
 import logging
-import sys
 from pathlib import Path
-
-# Add intelligent_common_utils to path
-_common = Path(__file__).resolve().parents[2] / "intelligent_common_utils" / "src"
-if _common.exists() and str(_common) not in sys.path:
-    sys.path.insert(0, str(_common))
 
 from generator_core.runner import run_generator
 
