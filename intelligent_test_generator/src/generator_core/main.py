@@ -36,7 +36,7 @@ def main() -> None:
                 max_cases=args.max_cases,
             )
         )
-        print(f"Wrote CSV to {out}")
+        logger.info("Wrote CSV to %s", out)
     except Exception as e:
         logger.exception("Generator failed: %s", e)
         raise
