@@ -36,6 +36,7 @@ def fake_llm() -> BaseChatModel:
     """Fake LLM returning a minimal valid test case JSON."""
     minimal = (
         '{"ID": "TC-REQ-001", "Name": "Sample test", "Requirement ID": "PRD-1", '
-        '"Component/Module": "Auth", "Test Type": "Functional", "Priority": "P1"}'
+        '"Component/Module": "Auth", "Test Group": "Full", '
+        '"Test Type": "Functional", "Priority": "P1"}'
     )
     return FakeListChatModel(responses=[minimal])

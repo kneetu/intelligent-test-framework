@@ -3,24 +3,32 @@ Run generator: load PRD, run LCEL (prompt | llm | parser), validate, write CSV.
 Uses agent_core from intelligent_common_utils (path must be set).
 """
 
-import csv
 import json
 import logging
 import sys
+from collections import defaultdict
 from pathlib import Path
+from typing import Any, Literal
+
+from pydantic import PydanticUndefined
 
 # Ensure intelligent_common_utils is on path when running from generator
 _common_src = Path(__file__).resolve().parents[2] / "intelligent_common_utils" / "src"
 if _common_src.exists() and str(_common_src) not in sys.path:
     sys.path.insert(0, str(_common_src))
 
+from generator_core.id_utils import (
+    assign_sequential_id,
+    next_sequence_number,
+    resolve_component_segment,
+)
 from generator_core.prompts import GENERATE_ONE_TEST
 from generator_core.schema import TestCaseRow
 
 logger = logging.getLogger(__name__)
 
 
-def _load_config(config_path: str | None) -> dict:
+def _load_config(config_path: str | None) -> dict[str, Any]:
     """
     Load generator configuration from a JSON file, if provided.
 
@@ -51,11 +59,83 @@ def _get_llm():
     return get_llm()
 
 
+# (TestCaseRow attribute, chain.ainvoke key). Config JSON may override any key.
+_PROMPT_DEFAULT_KEYS: tuple[tuple[str, str], ...] = (
+    ("Description", "default_description"),
+    ("Test_Group", "default_test_group"),
+    ("Test_Type", "default_test_type"),
+    ("Priority", "default_priority"),
+    ("Severity", "default_severity"),
+    ("Pre_requisite", "default_pre_requisite"),
+    ("Test_Data", "default_test_data"),
+    ("Environment", "default_environment"),
+    ("Actual_Value", "default_actual_value"),
+    ("Additional_Notes", "default_additional_notes"),
+    ("Automation_Priority", "default_automation_priority"),
+    ("Automation_Status", "default_automation_status"),
+    ("Owner", "default_owner"),
+    ("Estimated_Time_mins", "default_estimated_time_mins"),
+    ("Tags", "default_tags"),
+    ("Defect", "default_defect"),
+    ("Status", "default_status"),
+    ("Version", "default_version"),
+)
+
+
+def _test_case_row_field_default(attr: str) -> Any:
+    """Default value for a TestCaseRow field without building a full instance."""
+    info = TestCaseRow.model_fields[attr]
+    if info.default is not PydanticUndefined:
+        return info.default
+    if info.default_factory is not None:
+        return info.default_factory()
+    return None
+
+
+def _prompt_value_for_key(
+    invoke_key: str,
+    config: dict[str, Any],
+    model_default: Any,
+) -> str:
+    """Use config override when present; otherwise TestCaseRow field default."""
+    if invoke_key in config:
+        val = config[invoke_key]
+        return "" if val is None else str(val)
+    return "" if model_default is None else str(model_default)
+
+
+def build_chain_invoke_inputs(
+    requirement_text: str,
+    requirement_id: str,
+    component: str,
+    format_instructions: str,
+    config: dict[str, Any] | None = None,
+) -> dict[str, str]:
+    """
+    Build the full input dict for GENERATE_ONE_TEST | llm | parser.
+
+    Matches all template variables; optional CSV defaults come from TestCaseRow
+    defaults unless overridden in config (e.g. default_test_group, default_priority).
+    """
+    cfg = config if config is not None else {}
+    out: dict[str, str] = {
+        "requirement_text": requirement_text,
+        "requirement_id": requirement_id,
+        "component": component,
+        "format_instructions": format_instructions,
+    }
+    for attr, invoke_key in _PROMPT_DEFAULT_KEYS:
+        fallback = _test_case_row_field_default(attr)
+        out[invoke_key] = _prompt_value_for_key(invoke_key, cfg, fallback)
+    return out
+
+
 async def generate_one_case(
     requirement_text: str,
     requirement_id: str,
     component: str,
     llm=None,
+    config: dict[str, Any] | None = None,
 ) -> TestCaseRow:
     """
     Generate one test case from a requirement using LCEL: prompt | llm | parser.
@@ -64,17 +144,18 @@ async def generate_one_case(
 
     if llm is None:
         llm = _get_llm()
+    cfg = config if config is not None else {}
     parser = PydanticOutputParser(pydantic_object=TestCaseRow)
     chain = GENERATE_ONE_TEST | llm | parser
     try:
-        result = await chain.ainvoke(
-            {
-                "requirement_text": requirement_text,
-                "requirement_id": requirement_id,
-                "component": component,
-                "format_instructions": parser.get_format_instructions(),
-            }
+        invoke_payload = build_chain_invoke_inputs(
+            requirement_text=requirement_text,
+            requirement_id=requirement_id,
+            component=component,
+            format_instructions=parser.get_format_instructions(),
+            config=cfg,
         )
+        result = await chain.ainvoke(invoke_payload)
         if isinstance(result, TestCaseRow):
             return result
         return TestCaseRow.model_validate(result)
@@ -97,7 +178,7 @@ async def run_generator(
 
     setup_tracing()
 
-    # Load optional configuration (e.g., default max_cases) from config_path.
+    # Load optional configuration (e.g. default max_cases) from config_path.
     config = _load_config(config_path)
     if max_cases is None:
         cfg_max_cases = config.get("max_cases")
@@ -112,15 +193,38 @@ async def run_generator(
     if max_cases is not None:
         sections = sections[: max_cases]
     llm = _get_llm()
-    rows: List[TestCaseRow] = []
-    for req_id, text, component in sections:
+    rows: list[TestCaseRow] = []
+
+    seq_mode: Literal["global", "per_component"] = "per_component"
+    mode_raw = config.get("id_sequence_mode", "per_component")
+    if mode_raw in ("global", "per_component"):
+        seq_mode = mode_raw  # type: ignore[assignment]
+    width = 3
+    wcfg = config.get("id_numeric_width")
+    if isinstance(wcfg, int) and wcfg > 0:
+        width = min(wcfg, 10)
+
+    global_counter = 0
+    per_component: defaultdict[str, int] = defaultdict(int)
+
+    for req_id, text, section_component in sections:
         try:
             row = await generate_one_case(
                 requirement_text=text,
                 requirement_id=req_id,
-                component=component,
+                component=section_component,
                 llm=llm,
+                config=config,
             )
+            effective_cm = (row.Component or "").strip() or section_component
+            segment = resolve_component_segment(effective_cm, req_id, config)
+            seq, global_counter, per_component = next_sequence_number(
+                seq_mode,
+                segment,
+                global_counter,
+                per_component,
+            )
+            row = assign_sequential_id(row, segment, seq, width=width)
             rows.append(row)
         except Exception as e:
             logger.warning("Skipping section %s: %s", req_id, e)
@@ -133,7 +237,7 @@ async def run_generator(
 def _split_prd_into_requirements(prd_content: str) -> list[tuple]:
     """Split PRD text into (requirement_id, text, component) for each section."""
     lines = prd_content.strip().split("\n")
-    sections: List[tuple] = []
+    sections: list[tuple] = []
     current = []
     component = "General"
     req_id = "PRD-1"
@@ -159,16 +263,16 @@ def _split_prd_into_requirements(prd_content: str) -> list[tuple]:
     return sections
 
 
-def _write_csv(path: Path, rows: List[TestCaseRow]) -> None:
+def _write_csv(path: Path, rows: list[TestCaseRow]) -> None:
     """Write rows to CSV with exact header from testCase_template."""
     with path.open("w", newline="", encoding="utf-8") as f:
         header = (
             rows[0].to_csv_header()
             if rows
             else (
-                "ID,Name,Description,Requirement ID,Component/Module,Test Type,"
-                "Priority,Severity,Pre-requisite,Test Data,Environment,Steps,"
-                "Expected,Actual Value,Additional Notes,Automation Priority,"
+                "ID,Name,Description,Requirement ID,Component/Module,Test Group,"
+                "Test Type,Priority,Severity,Pre-requisite,Test Data,Environment,"
+                "Steps,Expected,Actual Value,Additional Notes,Automation Priority,"
                 "Automation Status,Owner,Estimated Time (mins),Tags,Defect,"
                 "Status,Version"
             )

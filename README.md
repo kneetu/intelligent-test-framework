@@ -7,7 +7,7 @@ Multi-module framework for PRD-driven test case generation and review. Three mod
 | Module | Purpose |
 |--------|--------|
 | **intelligent_common_utils** | Shared agent core: LLM (OpenAI gpt-4o-mini), agent loop, tools, memory, judge, config, Postgres helpers, LangSmith tracing, FastAPI for Jenkins |
-| **intelligent_test_generator** | Reads PRD + config → generates test cases as **CSV** (schema from testCase_template) |
+| **intelligent_test_generator** | Reads PRD + config → generates test cases as **CSV** (IDs `TC-{Component}-{NNN}`, **Test Group** column Smoke/Full/Comprehensive; see testCase_template) |
 | **intelligent_test_reviewer** | Reads PRD + generator CSV → outputs **structured review** (JSON, Pydantic) |
 
 ## Run each module in isolation

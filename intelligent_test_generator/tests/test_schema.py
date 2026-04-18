@@ -6,14 +6,17 @@ from generator_core.schema import TestCaseRow
 
 
 def test_test_case_row_to_csv_header() -> None:
-    """Header matches testCase_template order."""
+    """Header matches testCase_template order (includes Test Group)."""
     row = TestCaseRow(
         ID="TC-LOGIN-001",
         Name="Login with valid email",
         Requirement_ID="PRD-3.2.1",
-        Component_Module="Auth",
+        Component="Auth",
+        Test_Group="Smoke",
     )
     assert "ID,Name,Description,Requirement ID" in row.to_csv_header()
+    assert "Test Group" in row.to_csv_header()
+    assert ",Test Type," in row.to_csv_header()
     assert "Actual Value" in row.to_csv_header()
 
 
@@ -23,7 +26,7 @@ def test_test_case_row_to_csv_row() -> None:
         ID="TC-001",
         Name="Test",
         Requirement_ID="PRD-1",
-        Component_Module="M",
+        Component="M",
     )
     line = row.to_csv_row()
     assert "TC-001" in line

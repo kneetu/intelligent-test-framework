@@ -14,7 +14,7 @@ You will read a PRD (Product Requirements Document) and output **test cases as C
 Create a CSV with the header exactly as below (in this order):
 ID,Name,Description,Requirement ID,Component/Module,Test Type,Priority,Severity,Pre-requisite,Test Data,Environment,Steps,Expected,Actual Value,Additional Notes,Automation Priority,Automation Status,Owner,Estimated Time (mins),Tags,Defect,Status,Version
 **Column guidance:**
-- **ID**:Required, Deterministic, unique. Format: `TC-{REQ_OR_AREA}-{NNN}` (e.g., `TC-LOGIN-001`). If no clear requirement key, use area/module (UPPER_SNAKE_CASE).
+- **ID**:Required, Deterministic, unique. Format: `TC-{Component}-{NNN}` (e.g., `TC-LOGIN-001`). If no clear requirement key, use area/module/NULL (UPPER_SNAKE_CASE).
 - **Summary**:Required, 5–12 words, imperative (e.g., “Create account with valid email”).
 - **Description**:Optional, 1–3 concise sentences: what is tested, and why it matters.
 - **Requirement ID**:Required, Trace to PRD sections/IDs (e.g., `PRD-3.2.1`, `REQ-AC-07`). If missing, map to the closest heading path (e.g., `PRD[3.2]/Password Policy`).
