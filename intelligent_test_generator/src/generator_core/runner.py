@@ -10,7 +10,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import PydanticUndefined
+from pydantic_core import PydanticUndefined
 
 # Ensure intelligent_common_utils is on path when running from generator
 _common_src = Path(__file__).resolve().parents[2] / "intelligent_common_utils" / "src"
