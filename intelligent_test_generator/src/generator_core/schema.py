@@ -17,12 +17,12 @@ class TestCaseRow(BaseModel):
     """One row of the test case CSV; all columns from testCase_template."""
 
     ID: str = Field(
-        description="TC-{Component}-{NNN}; Component from Component/Module or NULL",
+        description="TC-{Component}-{NNN}; Component from Component/Module. NEVER use NULL. Use 'General' if missing."
     )
     Name: str = Field(description="5-12 words, imperative summary (Summary)")
     Description: str = Field(default="")
     Requirement_ID: str = Field(alias="Requirement ID", description="PRD section/ID")
-    Component: str = Field(alias="Component/Module", default="")
+    Component: str = Field(alias="Component/Module", default="General")
     Test_Group: str = Field(
         alias="Test Group",
         default="Full",
