@@ -10,6 +10,34 @@ Multi-module framework for PRD-driven test case generation and review. Three mod
 | **intelligent_test_generator** | Reads PRD + config → generates test cases as **CSV** (IDs `TC-{Component}-{NNN}`, **Test Group** column Smoke/Full/Comprehensive; see testCase_template) |
 | **intelligent_test_reviewer** | Reads PRD + generator CSV → outputs **structured review** (JSON, Pydantic) |
 
+## Setup
+
+Set your API key before running (only `OPENAI_API_KEY` is required; `LANGSMITH_API_KEY` is optional for tracing).
+
+**macOS / Linux (bash/zsh):**
+```bash
+export OPENAI_API_KEY="sk-..."
+export LANGSMITH_API_KEY="lsv2_..."   # optional
+```
+
+**Windows (PowerShell):**
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:OPENAI_API_KEY = "sk-..."
+$env:LANGSMITH_API_KEY = "lsv2_..."   # optional
+```
+
+**Windows (cmd):**
+```bat
+python -m venv .venv
+.\.venv\Scripts\activate.bat
+pip install -r requirements.txt
+set OPENAI_API_KEY=sk-...
+set LANGSMITH_API_KEY=lsv2_...
+```
+
 ## Run each module in isolation
 
 **Common utils (API):**
@@ -18,6 +46,8 @@ cd intelligent_common_utils
 PYTHONPATH=src python -m agent_core.main serve
 # Health: GET http://localhost:8000/health
 ```
+
+On Windows, the only difference is how `PYTHONPATH` is set and that path entries are separated by `;` instead of `:`. See the Windows sections below.
 
 **Generator (CLI):**
 ```bash
@@ -44,6 +74,39 @@ PYTHONPATH=intelligent_common_utils/src:intelligent_test_reviewer/src \
 ```
 
 Or use the optional e2e script (see `scripts/run_e2e.sh`).
+
+## Run on Windows
+
+PowerShell uses `;` as the `PYTHONPATH` separator (not `:`) and `$env:` to set variables. Run from the repo root.
+
+**Generator (PowerShell):**
+```powershell
+$env:PYTHONPATH = "intelligent_common_utils/src;intelligent_test_generator/src"
+python -m generator_core.main --prd resources/PRD.txt --output generated_testcases/out.csv
+```
+
+**Reviewer (PowerShell):**
+```powershell
+$env:PYTHONPATH = "intelligent_common_utils/src;intelligent_test_reviewer/src"
+python -m reviewer_core.main --prd resources/PRD.txt --csv generated_testcases/out.csv --output review/review.json
+```
+
+**End-to-end (PowerShell):**
+```powershell
+.\scripts\run_e2e.ps1
+```
+
+If script execution is blocked by policy, run it without changing your global settings:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_e2e.ps1
+```
+
+**End-to-end (cmd):**
+```bat
+scripts\run_e2e.bat
+```
+
+Both e2e scripts accept optional positional args: PRD path, output CSV path, output JSON path. They assume `OPENAI_API_KEY` is already set in the environment.
 
 ## Tech stack and versions
 
