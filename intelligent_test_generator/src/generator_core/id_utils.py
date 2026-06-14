@@ -45,7 +45,7 @@ def resolve_component_segment(
     seg = sanitize_component_segment(merged)
     if seg and seg != "GENERAL":
         return seg
-    fallback = config.get("id_component_fallback", "NULL")
+    fallback = config.get("id_component_fallback", "GENERAL")
     if isinstance(fallback, str) and fallback.strip():
         fb = fallback.strip().upper()
         if fb == "NULL":
@@ -65,7 +65,7 @@ def format_test_case_id(component_segment: str, sequence: int, width: int = 3) -
     """
     Build TC-{Component}-{NNN} with zero-padded NNN.
     """
-    safe = re.sub(r"[^A-Za-z0-9_]+", "_", component_segment).strip("_") or "NULL"
+    safe = re.sub(r"[^A-Za-z0-9_]+", "_", component_segment).strip("_") or "GENERAL"
     suffix = str(max(0, int(sequence))).zfill(width)
     return f"TC-{safe}-{suffix}"
 
